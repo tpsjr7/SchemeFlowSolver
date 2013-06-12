@@ -1,4 +1,13 @@
-(define board_def '( 
+(define board_def '(
+0 0 0 0 0 0 1
+0 0 0 0 0 2 3
+0 2 0 0 0 0 0 
+0 0 0 4 5 0 0 
+0 0 4 0 6 0 0 
+0 0 0 0 3 6 0 
+0 0 0 0 0 1 5
+))
+(define board_def2 '( 
 0 0 0 0 0 0 0 0 1
 0 2 0 0 0 0 0 0 2
 0 1 3 0 0 4 0 5 6
@@ -10,22 +19,10 @@
 0 0 0 0 0 0 0 0 0
 ))
 
-(define board_occ '( 
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0
-))
-
-(define num_colors 9)
-
-(define board_size 81)
-(define board_width 9)
+(define board_size (length board_def))
+(define board_occ (make-list board_size 0))
+(define num_colors (apply max board_def))
+(define board_width (inexact->exact (sqrt board_size)))
 
 (define (findPipeStart color )
     (list-index board_def color))
@@ -97,7 +94,7 @@
 		((and (canGoSouth pos color board_copy) (solve (+ pos board_width) color board_copy)) board_copy)
 		((and (canGoEast  pos color board_copy) (solve (+ pos 1          ) color board_copy)) board_copy)
 		((and (canGoWest  pos color board_copy) (solve (- pos 1          ) color board_copy)) board_copy)
-		(#t #f)))) ;; default case, none led to a solution so return false			
+		(#t #f))) ;; default case, none led to a solution so return false			
 			
 ;; Main solver, recursive function.
 (define (solve pos color board_occupied)
@@ -115,7 +112,13 @@
 			(explore pos color new_board))))
 
 (define (flow_solve)
-    (display (solve (findPipeStart 1) 1 board_occ)))
+    (define start-time (tms:clock (times )))
+    (solve (findPipeStart 1) 1 board_occ)
+    (let ((total-time (exact->inexact (/ (- (tms:clock (times )) start-time)  internal-time-units-per-second ))))
+        (display (string-join `("\n" ,(number->string total-time) "\n" )))
+    )
+)
+    
 
 ;;(flow_solve) ;; run the solver
     
