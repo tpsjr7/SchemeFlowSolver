@@ -79,21 +79,11 @@
     (and (> (modulo pos board_width) 0)                 (isPosCompat color (- pos 1)           board_occupied)))
 
 (define (explore pos color board_occupied)
-    (let ((board_copy (list-copy board_occupied)))
-        (cond
-            ((and (canGoNorth pos color board_copy) (solve (- pos board_width) color board_copy)) board_copy)
-            ((and (canGoSouth pos color board_copy) (solve (+ pos board_width) color board_copy)) board_copy)
-            ((and (canGoEast  pos color board_copy) (solve (+ pos 1          ) color board_copy)) board_copy)
-            ((and (canGoWest  pos color board_copy) (solve (- pos 1          ) color board_copy)) board_copy)
-            (#t #f)))) ;; default case, none led to a solution so return false
-
-(define (explore pos color board_occupied)
-    (define board_copy (list-copy board_occupied))
 	(cond
-		((and (canGoNorth pos color board_copy) (solve (- pos board_width) color board_copy)) board_copy)
-		((and (canGoSouth pos color board_copy) (solve (+ pos board_width) color board_copy)) board_copy)
-		((and (canGoEast  pos color board_copy) (solve (+ pos 1          ) color board_copy)) board_copy)
-		((and (canGoWest  pos color board_copy) (solve (- pos 1          ) color board_copy)) board_copy)
+		((and (canGoNorth pos color board_occupied) (solve (- pos board_width) color board_occupied)) board_occupied)
+		((and (canGoSouth pos color board_occupied) (solve (+ pos board_width) color board_occupied)) board_occupied)
+		((and (canGoEast  pos color board_occupied) (solve (+ pos 1          ) color board_occupied)) board_occupied)
+		((and (canGoWest  pos color board_occupied) (solve (- pos 1          ) color board_occupied)) board_occupied)
 		(#t #f))) ;; default case, none led to a solution so return false			
 			
 ;; Main solver, recursive function.
