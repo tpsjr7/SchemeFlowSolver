@@ -46,7 +46,7 @@
         pairs))
 
 (define (findPipeStart color )
-    (vector-ref (vector-ref pipePairs color) 1))
+    (vector-ref (vector-ref pipePairs color) 0))
 
 (define (isSolved count) ;;TODO fix caller
     (>= count board_size))
@@ -70,12 +70,11 @@
     (display "\n"))
 
 (define (isFinishedPipe color board_occupied)
-    (define first (findPipeStart color))
-	(if (not (isOccupied first board_occupied))
-		#f (let loop ((i (+ 1 first)))
-			(if (>= i board_size)
-				#f (if (and (isOccupied i board_occupied) (= color (colorAt i)))
-					#t (loop (+ i 1)))))))
+    (define apair (vector-ref pipePairs color))
+    (and 
+        (not(= 0 (vector-ref board_occupied (vector-ref apair 1)))) ;; check 1th first because 0th is most likely there.
+        (not(= 0 (vector-ref board_occupied (vector-ref apair 0))))))
+        
 
 (define (markBoard pos color board_occupied )
     (let ((board (vector-copy board_occupied)))
@@ -111,10 +110,10 @@
 ;; Main solver, recursive function.
 (define (solve pos color board_occupied move_count)
     (define new_board (markBoard pos color board_occupied))
-    (printBoard new_board)
+    ;;(printBoard new_board)
     (if (isSolved move_count)
         (begin 
-			
+            (printBoard new_board)
 			(display "solved!")
             new_board );; it's solved, so return board as is.
 		(if (isFinishedPipe color new_board) ;;
