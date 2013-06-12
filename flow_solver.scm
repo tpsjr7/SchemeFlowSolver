@@ -98,14 +98,21 @@
 (define (canGoWest pos color board_occupied)
     (and (> (modulo pos board_width) 0)                 (isPosCompat color (- pos 1)           board_occupied)))
 
-(define (explore pos color board_occupied move_count)
+(define (explore pos color board_occupied move_count )
     (define new_move_count (+ 1 move_count))
-	(cond
-		((and (canGoNorth pos color board_occupied) (solve (- pos board_width) color board_occupied new_move_count)) board_occupied)
-		((and (canGoSouth pos color board_occupied) (solve (+ pos board_width) color board_occupied new_move_count)) board_occupied)
-		((and (canGoEast  pos color board_occupied) (solve (+ pos 1          ) color board_occupied new_move_count)) board_occupied)
-		((and (canGoWest  pos color board_occupied) (solve (- pos 1          ) color board_occupied new_move_count)) board_occupied)
-		(#t #f))) ;; default case, none led to a solution so return false			
+    ;(define y  (inexact->exact ( floor  ( / pos board_width))))
+    ;(define x  (- pos         ( * y  board_width )))
+    ;(define ty (inexact->exact ( floor  ( / target_pos board_width))))
+    ;(define tx (- target_pos  ( * ty board_width )))
+    (define (tryDirection directionFunc new_pos)
+        (and (directionFunc pos color board_occupied) (solve new_pos color board_occupied new_move_count)))
+
+    (define (GN) (tryDirection canGoNorth (- pos board_width)))
+    (define (GS) (tryDirection canGoSouth (+ pos board_width)))    
+    (define (GE) (tryDirection canGoEast  (+ pos 1          )))
+    (define (GW) (tryDirection canGoWest  (- pos 1          )))
+
+	(if (or (GN) (GS) (GE) (GW)) board_occupied  #f))
 			
 ;; Main solver, recursive function.
 (define (solve pos color board_occupied move_count)
