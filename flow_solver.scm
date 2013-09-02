@@ -1,9 +1,9 @@
-(define board_def #(
+(define board_def2 #(
 1 2 0 
 0 2 0 
 0 0 1
 ))
-(define board_def3 #(
+(define board_def1 #( ;18000
 0 0 0 0 0 0 1
 0 0 0 0 0 2 3
 0 2 0 0 0 0 0 
@@ -12,7 +12,7 @@
 0 0 0 0 3 6 0 
 0 0 0 0 0 1 5
 ))
-(define board_def2 #( 
+(define board_def3 #( 
 0 0 0 0 0 0 0 0 1
 0 2 0 0 0 0 0 0 2
 0 1 3 0 0 4 0 5 6
@@ -22,6 +22,17 @@
 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0
+))
+
+(define board_def #( ;113410
+0 0 0 0 1 2 1 0 
+0 0 0 0 3 0 4 0 
+0 0 5 0 0 0 0 0 
+0 0 0 0 0 2 4 0 
+0 0 5 6 0 0 0 0 
+0 0 0 0 0 7 0 0 
+0 6 7 3 0 0 0 0 
+0 0 0 0 0 0 0 0
 ))
 
 (define board_size (vector-length board_def))
@@ -47,6 +58,8 @@
 
 (define (findPipeStart color )
     (vector-ref (vector-ref pipePairs color) 0))
+(define (findPipeEnd color)
+    (vector-ref (vector-ref pipePairs color) 1))
 
 (define (isSolved count) ;;TODO fix caller
     (>= count board_size))
@@ -98,12 +111,13 @@
 (define (canGoWest pos color board_occupied)
     (and (> (modulo pos board_width) 0)                 (isPosCompat color (- pos 1)           board_occupied)))
 
-(define (explore pos color board_occupied move_count )
+(define (explore pos color board_occupied move_count target_pos)
+
     (define new_move_count (+ 1 move_count))
-    ;(define y  (inexact->exact ( floor  ( / pos board_width))))
-    ;(define x  (- pos         ( * y  board_width )))
-    ;(define ty (inexact->exact ( floor  ( / target_pos board_width))))
-    ;(define tx (- target_pos  ( * ty board_width )))
+    (define y  (inexact->exact ( floor  ( / pos board_width))))
+    (define x  (- pos         ( * y  board_width )))
+    (define ty (inexact->exact ( floor  ( / target_pos board_width))))
+    (define tx (- target_pos  ( * ty board_width )))
     (define (tryDirection directionFunc new_pos)
         (and (directionFunc pos color board_occupied) (solve new_pos color board_occupied new_move_count)))
 
@@ -111,24 +125,39 @@
     (define (GS) (tryDirection canGoSouth (+ pos board_width)))    
     (define (GE) (tryDirection canGoEast  (+ pos 1          )))
     (define (GW) (tryDirection canGoWest  (- pos 1          )))
+    (define W (> tx x))
+    (define N (> ty y))
+;    (format #t "pos:~a, target pos:~a, W:~a, N:~a, tx:~a, ty:~a, x:~a, y:~a\n" pos target_pos W N tx ty x y )
 
-	(if (or (GN) (GS) (GE) (GW)) board_occupied  #f))
-			
+    (cond 
+;         (#t                      (if (or (GW) (GN) (GE) (GS)) board_occupied  #f)) ;37
+;         (#t                      (if (or (GW) (GS) (GE) (GN)) board_occupied  #f))  ;41
+;         (#t                      (if (or (GE) (GN) (GW) (GS)) board_occupied  #f)) ;43
+;         (#t                      (if (or (GE) (GS) (GW) (GN)) board_occupied  #f)) ;1
+       ((and W       N)         (if (or (GW) (GN) (GE) (GS)) board_occupied  #f))
+       ((and W       (not N))   (if (or (GW) (GS) (GE) (GN)) board_occupied  #f))	
+       ((and (not W) N)         (if (or (GE) (GN) (GW) (GS)) board_occupied  #f))
+       ((and (not W) (not N))   (if (or (GE) (GS) (GW) (GN)) board_occupied  #f))
+        (#t (display "wtf!"))))
+
+(define solve_count 0)
+
 ;; Main solver, recursive function.
 (define (solve pos color board_occupied move_count)
     (define new_board (markBoard pos color board_occupied))
     ;;(printBoard new_board)
+    (set! solve_count (1+ solve_count))
     (if (isSolved move_count)
         (begin 
             (printBoard new_board)
-			(display "solved!")
+			(format #t "solved! ~a\n" solve_count)
             new_board );; it's solved, so return board as is.
 		(if (isFinishedPipe color new_board) ;;
 			(if (>= color num_colors) 
 				#f                           ;; pipe is finished, but board is not solved and no more colors.
 				(let* ((new_color (+ 1 color)) (new_pos (findPipeStart new_color))) ;; pipe is finished and there are more colors
 					(solve new_pos new_color new_board (+ 1 move_count )))) ;; continue to solve from start of next pipe
-			(explore pos color new_board move_count))))
+			(explore pos color new_board move_count (findPipeEnd color)))))
 
 (define (flow_solve)
     (define start-time (tms:clock (times )))
@@ -138,10 +167,6 @@
     )
 )
     
-
-;;(flow_solve) ;; run the solver
-    
-    
 (define (aloop)
     (let loop_x ((i 0)) ( if ( = i 3) #f (begin 
         (let loop_y ((j 0)) (if ( = j 3) #f (begin
@@ -150,10 +175,10 @@
         (display "\n")
         (loop_x (+ i 1))))))
 
-(let loop ((i 0)(j 5))
-    (unless (= i 10)
-        (format #t "i is ~a, j is ~a~%" i j)
-        (loop (+ 1 i) 20 )))
+;(let loop ((i 0)(j 5))
+;    (unless (= i 10)
+;        (format #t "i is ~a, j is ~a~%" i j)
+;        (loop (+ 1 i) 20 )))
 
 (define (anotherloop)
     (do ((i 0 (+ i 1)))
@@ -161,3 +186,4 @@
         (display i)))
 
 
+(flow_solve) ;; run the solver
